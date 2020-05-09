@@ -15,22 +15,34 @@ class Matrix:
         self.matrix.append(row)
 
 
-def adding(a, b):
-    result = []
-    if a.n != b.n or a.m != b.m:
-        print('ERROR')
-        return None
-    for n in range(a.n):
-        result.append([])
-        for m in range(a.m):
-            result[n].append(a.matrix[n][m] + b.matrix[n][m])
-    for n in result:
+def print_result(matrix):
+    for n in matrix:
         n = map(str, n)
         print(' '.join(n))
 
 
+def adding(a, b):
+    matrix = []
+    if a.n != b.n or a.m != b.m:
+        print('ERROR')
+        return None
+    for n in range(a.n):
+        matrix.append([])
+        for m in range(a.m):
+            matrix[n].append(a.matrix[n][m] + b.matrix[n][m])
+    print_result(matrix)
+
+
+def multiplication_by_number(a, number):
+    matrix = []
+    for n in range(a.n):
+        matrix.append([])
+        for m in range(a.m):
+            matrix[n].append(a.matrix[n][m] * number)
+    print_result(matrix)
+
+
 x, y = map(int, input().split())
 matrix_a = Matrix(x, y)
-x, y = map(int, input().split())
-matrix_b = Matrix(x, y)
-adding(matrix_a, matrix_b)
+number = int(input())
+multiplication_by_number(matrix_a, number)
