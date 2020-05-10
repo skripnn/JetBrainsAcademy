@@ -1,13 +1,19 @@
+import copy
+
+
 class Matrix:
 
-    def __init__(self, n, m):  # Creating a Matrix with N rows and M columns
+    def __init__(self, n, m, matrix=None):  # Creating a Matrix with N rows and M columns
         self.n = int(n)
         self.m = int(m)
-        self.matrix = []
-        for _ in range(self.n):
-            self.input_row(input())
+        if matrix is None:
+            self.matrix = []
+            for _ in range(self.n):
+                self.input_row(input())
+        else:
+            self.matrix = matrix
 
-    def input_row(self, row):   # Input one row
+    def input_row(self, row):  # Input one row
         row = [float(n) if '.' in n else int(n) for n in row.split()]
         self.matrix.append(row)
 
@@ -17,6 +23,7 @@ class Menu:
 2. Multiply matrix by a constant
 3. Multiply matrices
 4. Transpose matrix
+5. Calculate a determinant
 0. Exit'''
 
     text_4 = '''
@@ -29,7 +36,7 @@ class Menu:
         print(self.text)
         self.state = [0]
 
-    def start(self, n):         # Menu algorithm
+    def start(self, n):  # Menu algorithm
         if len(self.state) == 1:
             if n == 1:
                 self._1()
@@ -40,13 +47,16 @@ class Menu:
             elif n == 4:
                 print(self.text_4)
                 self.state.append(4)
+                return None
+            elif n == 5:
+                self._5()
             elif n == 0:
                 self._0()
         elif len(self.state) == 2:
             if self.state[1] == 4:
                 self._4(n)
             self.state.pop()
-            print(self.text)
+        print(self.text)
 
     def _1(self):
         x, y = map(int, input('Enter size of first matrix: ').split())
@@ -55,7 +65,7 @@ class Menu:
         x, y = map(int, input('Enter size of second matrix: ').split())
         print('Enter second matrix: ')
         matrix_b = Matrix(x, y)
-        adding(matrix_a, matrix_b)
+        print(result(adding(matrix_a, matrix_b)))
         del matrix_a
         del matrix_b
 
@@ -65,7 +75,7 @@ class Menu:
         matrix_a = Matrix(x, y)
         number = input('Enter constant: ')
         number = float(number) if '.' in number else int(number)
-        multiplication_by_number(matrix_a, number)
+        print(result(multiplication_by_number(matrix_a, number)))
         del matrix_a
 
     def _3(self):
@@ -75,7 +85,7 @@ class Menu:
         x, y = map(int, input('Enter size of second matrix: ').split())
         print('Enter second matrix: ')
         matrix_b = Matrix(x, y)
-        multiplication(matrix_a, matrix_b)
+        print(result(multiplication(matrix_a, matrix_b)))
         del matrix_a
         del matrix_b
 
@@ -84,40 +94,45 @@ class Menu:
         print('Enter matrix: ')
         matrix_a = Matrix(x, y)
         if n == 1:
-            transposition_main_diagonal(matrix_a)
+            print(result(transposition_main_diagonal(matrix_a)))
         elif n == 2:
-            transposition_side_diagonal(matrix_a)
+            print(result(transposition_side_diagonal(matrix_a)))
         elif n == 3:
-            transposition_by_vertical(matrix_a)
+            print(result(transposition_by_vertical(matrix_a)))
         elif n == 4:
-            transposition_by_horizontal(matrix_a)
+            print(result(transposition_by_horizontal(matrix_a)))
+        del matrix_a
+
+    def _5(self):
+        x, y = map(int, input('Enter matrix size: ').split())
+        print('Enter matrix: ')
+        matrix_a = Matrix(x, y)
+        print(result(determinate(matrix_a)))
+        del matrix_a
 
     def _0(self):
         exit()
 
 
-def error():
-    print('The operation cannot be performed.')
-
-
-def print_result(matrix):
+def result(answer):
+    if answer == 'error':
+        return 'The operation cannot be performed.\n'
     print('The result is:')
-    for n in matrix:
-        n = map(str, n)
-        print(' '.join(n))
-    print('')
+    if type(answer) is list:
+        # If answer is Matrix: every int to str, every row-list to row-str with spaces, whole list to str with '\n'
+        return '\n'.join([' '.join(map(str, n)) for n in answer]) + '\n'
+    return str(answer) + '\n'
 
 
 def adding(a, b):
     matrix = []
     if a.n != b.n or a.m != b.m:
-        error()
-        return None
+        return 'error'
     for n in range(a.n):
         matrix.append([])
         for m in range(a.m):
             matrix[n].append(a.matrix[n][m] + b.matrix[n][m])
-    print_result(matrix)
+    return matrix
 
 
 def multiplication_by_number(a, number):
@@ -126,14 +141,13 @@ def multiplication_by_number(a, number):
         matrix.append([])
         for m in range(a.m):
             matrix[n].append(a.matrix[n][m] * number)
-    print_result(matrix)
+    return matrix
 
 
 def multiplication(a, b):
     matrix = []
     if a.m != b.n:
-        error()
-        return None
+        return 'error'
     for n in range(a.n):
         matrix.append([])
         for m in range(b.m):
@@ -141,18 +155,18 @@ def multiplication(a, b):
             for _ in range(a.m):
                 matrix[n][m].append(a.matrix[n][_] * b.matrix[_][m])
             matrix[n][m] = sum(matrix[n][m])
-    print_result(matrix)
+    return matrix
 
 
 def transposition_main_diagonal(a):
     matrix = []
-    for n in range(a.n):
+    for n in range(a.m):
         matrix.append([])
-        for m in range(a.m):
+        for m in range(a.n):
             x = m
             y = n
             matrix[n].append(a.matrix[x][y])
-    print_result(matrix)
+    return matrix
 
 
 def transposition_side_diagonal(a):
@@ -163,7 +177,7 @@ def transposition_side_diagonal(a):
             x = (a.n - 1) - m
             y = (a.m - 1) - n
             matrix[n].append(a.matrix[x][y])
-    print_result(matrix)
+    return matrix
 
 
 def transposition_by_vertical(a):
@@ -174,7 +188,7 @@ def transposition_by_vertical(a):
             x = n
             y = (a.m - 1) - m
             matrix[n].append(a.matrix[x][y])
-    print_result(matrix)
+    return matrix
 
 
 def transposition_by_horizontal(a):
@@ -185,9 +199,32 @@ def transposition_by_horizontal(a):
             x = (a.n - 1) - n
             y = m
             matrix[n].append(a.matrix[x][y])
-    print_result(matrix)
+    return matrix
+
+
+def determinate(a):
+    if a.n != a.m:
+        return 'error'
+    if a.n == 1:
+        return a.matrix[0][0]
+    if a.n == 2:
+        return a.matrix[0][0] * a.matrix[1][1] - a.matrix[0][1] * a.matrix[1][0]
+    if a.n > 2:
+        x = 0
+        for n in range(a.n):
+            x += (-1) ** (a.n + (n + 1)) * a.matrix[a.n - 1][n] * determinate(minor(a, n))
+        return x
+
+
+def minor(a, i):
+    matrix = copy.deepcopy(a.matrix)
+    for n in range(a.n):
+        del matrix[n][i]
+    matrix.pop()
+    return Matrix(a.n - 1, a.m - 1, matrix)
 
 
 menu = Menu()
 while True:
     menu.start(int(input('Your choice: ')))
+
