@@ -286,18 +286,3 @@ def cofactor(a, n, m):
 menu = Menu()
 while True:
     menu.start(int(input('Your choice: ')))
-
-'''
-matrix_1 = [[2, -1, 0],
-            [0, 1, 2],
-            [1, 1, 0]]
-matrix_2 = [[2, 1],
-            [4, 2]]
-matrix_3 = [[0.33, 0, 0.33],
-            [-0.33, 0, 0.67],
-            [0.17, 0.5, -0.33]]
-matrix_a1 = Matrix(3, 3, matrix_1)
-matrix_b1 = Matrix(2, 2, matrix_2)
-print(result(inversion(matrix_a1)))
-print(result(inversion(matrix_b1)))
-'''
