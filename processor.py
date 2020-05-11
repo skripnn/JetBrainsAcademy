@@ -146,7 +146,7 @@ def error(code):
 
 
 def beauty_str_matrix(matrix):
-    matrix = rounding(matrix)               # round every digit to float(x.xx) or to int
+    matrix = rounding(matrix)               # round every digit to float(x.xxx) or to int
     for n in range(len(matrix)):
         matrix[n] = [str(m) for m in matrix[n]]             # convert every digit to str
     for n in range(len(matrix)):
