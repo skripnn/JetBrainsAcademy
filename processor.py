@@ -24,6 +24,7 @@ class Menu:
 3. Multiply matrices
 4. Transpose matrix
 5. Calculate a determinant
+6. Inverse matrix
 0. Exit'''
 
     text_4 = '''
@@ -50,6 +51,8 @@ class Menu:
                 return None
             elif n == 5:
                 self._5()
+            elif n == 6:
+                self._6()
             elif n == 0:
                 self._0()
         elif len(self.state) == 2:
@@ -58,7 +61,8 @@ class Menu:
             self.state.pop()
         print(self.text)
 
-    def _1(self):
+    @staticmethod
+    def _1():
         x, y = map(int, input('Enter size of first matrix: ').split())
         print('Enter first matrix: ')
         matrix_a = Matrix(x, y)
@@ -66,19 +70,18 @@ class Menu:
         print('Enter second matrix: ')
         matrix_b = Matrix(x, y)
         print(result(adding(matrix_a, matrix_b)))
-        del matrix_a
-        del matrix_b
 
-    def _2(self):
+    @staticmethod
+    def _2():
         x, y = map(int, input('Enter size of matrix: ').split())
         print('Enter matrix: ')
         matrix_a = Matrix(x, y)
         number = input('Enter constant: ')
         number = float(number) if '.' in number else int(number)
         print(result(multiplication_by_number(matrix_a, number)))
-        del matrix_a
 
-    def _3(self):
+    @staticmethod
+    def _3():
         x, y = map(int, input('Enter size of first matrix: ').split())
         print('Enter first matrix: ')
         matrix_a = Matrix(x, y)
@@ -86,10 +89,9 @@ class Menu:
         print('Enter second matrix: ')
         matrix_b = Matrix(x, y)
         print(result(multiplication(matrix_a, matrix_b)))
-        del matrix_a
-        del matrix_b
 
-    def _4(self, n):
+    @staticmethod
+    def _4(n):
         x, y = map(int, input('Enter matrix size: ').split())
         print('Enter matrix: ')
         matrix_a = Matrix(x, y)
@@ -101,33 +103,70 @@ class Menu:
             print(result(transposition_by_vertical(matrix_a)))
         elif n == 4:
             print(result(transposition_by_horizontal(matrix_a)))
-        del matrix_a
 
-    def _5(self):
+    @staticmethod
+    def _5():
         x, y = map(int, input('Enter matrix size: ').split())
         print('Enter matrix: ')
         matrix_a = Matrix(x, y)
         print(result(determinate(matrix_a)))
-        del matrix_a
 
-    def _0(self):
+    @staticmethod
+    def _6():
+        x, y = map(int, input('Enter matrix size: ').split())
+        print('Enter matrix: ')
+        matrix_a = Matrix(x, y)
+        print(result(inversion(matrix_a)))
+
+    @staticmethod
+    def _0():
         exit()
 
 
 def result(answer):
-    if answer == 'error':
-        return 'The operation cannot be performed.\n'
+    if type(answer) is str and answer.startswith('error'):
+        # If error was return:
+        # Print Error-message from the code
+        return error(int(answer[6:]))
     print('The result is:')
     if type(answer) is list:
-        # If answer is Matrix: every int to str, every row-list to row-str with spaces, whole list to str with '\n'
-        return '\n'.join([' '.join(map(str, n)) for n in answer]) + '\n'
+        # If answer is Matrix:
+        # 1. Convert every digit to str and equalize all columns,
+        # 2. every row-list to row-str with spaces,
+        # 3. whole list to str with '\n'
+        return '\n'.join([' '.join(n) for n in beauty_str_matrix(answer)]) + '\n'
     return str(answer) + '\n'
+
+
+def error(code):
+    if code == 1:
+        return 'The operation cannot be performed.\n'
+    if code == 2:
+        return "This matrix doesn't have an inverse.\n"
+
+
+def beauty_str_matrix(matrix):
+    matrix = rounding(matrix)               # round every digit to float(x.xx) or to int
+    for n in range(len(matrix)):
+        matrix[n] = [str(m) for m in matrix[n]]             # convert every digit to str
+    for n in range(len(matrix)):
+        for m in range(len(matrix[n])):                                         # for every column:
+            max_len = max([len(matrix[_][m]) for _ in range(len(matrix))])      # find max len of digit
+            while len(matrix[n][m]) != max_len:                                 # and add spaces to
+                matrix[n][m] = ' ' + matrix[n][m]                               # left side of each one
+    return matrix
+
+
+def rounding(matrix):
+    for n in range(len(matrix)):
+        matrix[n] = [float('{:.3f}'.format(m)) if float(m) != int(m) else int(m) for m in matrix[n]]
+    return matrix
 
 
 def adding(a, b):
     matrix = []
     if a.n != b.n or a.m != b.m:
-        return 'error'
+        return 'error 1'
     for n in range(a.n):
         matrix.append([])
         for m in range(a.m):
@@ -147,7 +186,7 @@ def multiplication_by_number(a, number):
 def multiplication(a, b):
     matrix = []
     if a.m != b.n:
-        return 'error'
+        return 'error 1'
     for n in range(a.n):
         matrix.append([])
         for m in range(b.m):
@@ -204,7 +243,7 @@ def transposition_by_horizontal(a):
 
 def determinate(a):
     if a.n != a.m:
-        return 'error'
+        return 'error 1'
     if a.n == 1:
         return a.matrix[0][0]
     if a.n == 2:
@@ -212,19 +251,53 @@ def determinate(a):
     if a.n > 2:
         x = 0
         for n in range(a.n):
-            x += (-1) ** (a.n + (n + 1)) * a.matrix[a.n - 1][n] * determinate(minor(a, n))
+            x += cofactor(a, a.n - 1, n) * a.matrix[a.n - 1][n]
         return x
 
 
-def minor(a, i):
+def minor(a, x, y):
     matrix = copy.deepcopy(a.matrix)
     for n in range(a.n):
-        del matrix[n][i]
-    matrix.pop()
+        del matrix[n][y]
+    del matrix[x]
     return Matrix(a.n - 1, a.m - 1, matrix)
+
+
+def inversion(a):
+    if determinate(a) == 0:
+        return 'error 2'
+    return multiplication_by_number(Matrix(a.n, a.m, adj(a)), 1 / determinate(a))
+
+
+def adj(a):
+    matrix = []
+    for n in range(a.n):
+        matrix.append([])
+        for m in range(a.m):
+            matrix[n].append(cofactor(a, n, m))
+    return transposition_main_diagonal(Matrix(a.n, a.m, matrix))
+
+
+def cofactor(a, n, m):
+    number = (-1) ** ((n + 1) + (m + 1))
+    return number * determinate(minor(a, n, m))
 
 
 menu = Menu()
 while True:
     menu.start(int(input('Your choice: ')))
 
+'''
+matrix_1 = [[2, -1, 0],
+            [0, 1, 2],
+            [1, 1, 0]]
+matrix_2 = [[2, 1],
+            [4, 2]]
+matrix_3 = [[0.33, 0, 0.33],
+            [-0.33, 0, 0.67],
+            [0.17, 0.5, -0.33]]
+matrix_a1 = Matrix(3, 3, matrix_1)
+matrix_b1 = Matrix(2, 2, matrix_2)
+print(result(inversion(matrix_a1)))
+print(result(inversion(matrix_b1)))
+'''
