@@ -1,13 +1,26 @@
 import sys
 import socket
-
+import itertools
+import string
 
 args = sys.argv
 address = (str(args[1]), int(args[2]))
-message = str(args[3])
 
-with socket.socket() as sock:
-    sock.connect(address)
-    sock.send(message.encode())
-    response = sock.recv(1024)
-    print(response.decode())
+symbols = string.ascii_lowercase + string.digits
+
+
+def options():
+    for i in range(len(symbols)):
+        for combination in itertools.product(symbols, repeat=i + 1):
+            yield ''.join(combination)
+
+
+with socket.socket() as client:
+    client.connect(address)
+    for option in options():
+        client.send(option.encode())
+        response = client.recv(1024).decode()
+        if response == 'Connection success!':
+            print(option)
+            break
+
