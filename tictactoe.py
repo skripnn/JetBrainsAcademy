@@ -1,3 +1,36 @@
+import random
+
+
+class AI:
+    class Easy:
+
+        def step(self, field):
+            print('Making move level "easy"')
+            x, y, _x, _y = self.random_coordinates()
+            while field[x][y] != ' ':
+                x, y, _x, _y = self.random_coordinates()
+            coordinates = str(_y) + ' ' + str(_x)
+            return coordinates
+
+        def random_coordinates(self):
+            _x = random.randint(1, 3)
+            _y = random.randint(1, 3)
+            x = _x - 1
+            y = _y - 1
+            if x == 2:
+                x = 0
+            elif x == 0:
+                x = 2
+            return x, y, _x, _y
+
+
+class Human:
+
+    def step(self, field):
+        coordinates = input('Enter the coordinates: ')
+        return coordinates
+
+
 class TicTacToe:
     wins = [[[0, 0], [0, 1], [0, 2]],
             [[1, 0], [1, 1], [1, 2]],
@@ -23,8 +56,17 @@ class TicTacToe:
 
     player = 'X'
 
+    player_x = None
+    player_o = None
+
     def __init__(self):
-        print('Enter cells: ', end='')
+        # print('Enter cells: ', end='')
+        self.player_x = Human()
+        self.player_o = AI.Easy()
+        self.algorithm()
+
+    def ai_step(self):
+        print(f'Making move level "easy"')
 
     def first_step(self, steps):
         for x in range(3):
@@ -38,19 +80,28 @@ class TicTacToe:
         self.add_to_cells()
         self.print_cells()
         self.check_state()
-        self.change_player()
-        self.count_steps += 1
-        if self.count_steps < 2:
-            self.enter_the_coordinates()
+        if self.state == 'Game not finished':
+            self.change_player()
+            self.count_steps += 1
+            self.step()
         else:
             print(self.state)
+            exit()
 
-    def step(self, step):
+    def step(self):
+        step = None
+        if self.player == 'X':
+            # if self.count_steps < 2:
+            # self.enter_the_coordinates()
+            step = self.player_x.step(self.field)
+        elif self.player == 'O':
+            step = self.player_o.step(self.field)
+
         if self.count_steps == 0:
             self.first_step(step)
         else:
             if not self.check_step(step):
-                self.enter_the_coordinates()
+                self.step()
             else:
                 x, y = self.make_coordinates(step)
                 self.field[x][y] = self.player
@@ -121,9 +172,9 @@ class TicTacToe:
         all_cells = [m for n in self.field for m in n]
         all_x = [x for x in all_cells if x == 'X']
         all_o = [o for o in all_cells if o == 'O']
-        if len(self.winners) > 1:
-            self.state = 'Impossible'
-        elif len(all_x) - len(all_o) > 1:
+        # if len(self.winners) > 1:
+        #     self.state = 'Impossible'
+        if len(all_x) - len(all_o) > 1:
             self.state = 'Impossible'
         elif len(all_o) - len(all_x) > 1:
             self.state = 'Impossible'
@@ -138,8 +189,7 @@ class TicTacToe:
                 self.state = 'O wins'
 
 
-
 game = TicTacToe()
-while game.count_steps < 2:
-# while True:
+# while game.count_steps < 2:
+while True:
     game.step(input())
