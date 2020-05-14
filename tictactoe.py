@@ -21,6 +21,8 @@ class TicTacToe:
 
     count_steps = 0
 
+    player = 'X'
+
     def __init__(self):
         print('Enter cells: ', end='')
 
@@ -36,9 +38,12 @@ class TicTacToe:
         self.add_to_cells()
         self.print_cells()
         self.check_state()
+        self.change_player()
         self.count_steps += 1
-#        if self.count_steps < 2:
-        self.enter_the_coordinates()
+        if self.count_steps < 2:
+            self.enter_the_coordinates()
+        else:
+            print(self.state)
 
     def step(self, step):
         if self.count_steps == 0:
@@ -48,8 +53,17 @@ class TicTacToe:
                 self.enter_the_coordinates()
             else:
                 x, y = self.make_coordinates(step)
-                self.field[x][y] = 'X'
+                self.field[x][y] = self.player
                 self.algorithm()
+
+    def change_player(self):
+        all_cells = [m for n in self.field for m in n]
+        all_x = [x for x in all_cells if x == 'X']
+        all_o = [o for o in all_cells if o == 'O']
+        if len(all_x) > len(all_o):
+            self.player = 'O'
+        elif len(all_o) >= len(all_x):
+            self.player = 'X'
 
     def make_coordinates(self, step):
         step = step.replace(' ', '')
@@ -124,8 +138,8 @@ class TicTacToe:
                 self.state = 'O wins'
 
 
+
 game = TicTacToe()
 while game.count_steps < 2:
 # while True:
     game.step(input())
-
