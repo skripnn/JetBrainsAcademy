@@ -6,22 +6,27 @@ class AI:
 
         def step(self, field):
             print('Making move level "easy"')
-            x, y, _x, _y = self.random_coordinates()
+            step = self.random_coordinates()
+            x, y = self.make_coordinates(step)
             while field[x][y] != ' ':
-                x, y, _x, _y = self.random_coordinates()
-            coordinates = str(_y) + ' ' + str(_x)
-            return coordinates
+                step = self.random_coordinates()
+                x, y = self.make_coordinates(step)
+            return step
 
         def random_coordinates(self):
-            _x = random.randint(1, 3)
-            _y = random.randint(1, 3)
-            x = _x - 1
-            y = _y - 1
+            x = random.randint(1, 3)
+            y = random.randint(1, 3)
+            return str(x) + ' ' + str(y)
+
+        def make_coordinates(self, step):
+            step = step.replace(' ', '')
+            x = int(step[1]) - 1
+            y = int(step[0]) - 1
             if x == 2:
                 x = 0
             elif x == 0:
                 x = 2
-            return x, y, _x, _y
+            return x, y
 
 
 class Human:
@@ -42,31 +47,36 @@ class TicTacToe:
             [[2, 0], [1, 1], [0, 2]],
             ]
 
-    field = [[' ', ' ', ' '],
+    '''field = [[' ', ' ', ' '],
              [' ', ' ', ' '],
-             [' ', ' ', ' ']]
+             [' ', ' ', ' ']]'''
 
-    cells = None
-
+    '''cells = None
     winners = []
-
     state = None
+    count_steps = None
+    player = None'''
 
-    count_steps = 0
+    '''player_x = None
+    player_o = None'''
 
-    player = 'X'
-
-    player_x = None
-    player_o = None
-
-    def __init__(self):
+    def __init__(self, player_x, player_o):
         # print('Enter cells: ', end='')
-        self.player_x = Human()
-        self.player_o = AI.Easy()
+        self.field = [[' ', ' ', ' '],
+                      [' ', ' ', ' '],
+                      [' ', ' ', ' ']]
+
+        self.cells = None
+        self.winners = []
+        self.state = None
+        self.count_steps = 0
+        self.player = 'X'
+
+        self.player_x = player_x
+        self.player_o = player_o
+
         self.algorithm()
 
-    def ai_step(self):
-        print(f'Making move level "easy"')
 
     def first_step(self, steps):
         for x in range(3):
@@ -86,7 +96,7 @@ class TicTacToe:
             self.step()
         else:
             print(self.state)
-            exit()
+            print('')
 
     def step(self):
         step = None
@@ -189,7 +199,39 @@ class TicTacToe:
                 self.state = 'O wins'
 
 
-game = TicTacToe()
-# while game.count_steps < 2:
-while True:
-    game.step(input())
+class Menu:
+
+    def __init__(self):
+        while True:
+            line = input('Input command: ').split()
+            command = line.pop(0)
+            self.input(command, line)
+
+    def input(self, command, args):
+        if command == 'start':
+            if len(args) != 2:
+                return self.bad_parameters()
+            players = []
+            for arg in args:
+                players.append(self.player_choose(arg))
+                print(players)
+                if players[-1] is None:
+                    return self.bad_parameters()
+            return TicTacToe(*players)
+        if command == 'exit':
+            exit()
+
+    def player_choose(self, player):
+        if player == 'user':
+            return Human()
+        if player == 'easy':
+            return AI.Easy()
+        return None
+
+    def bad_parameters(self):
+        print('Bad parameters!')
+        return None
+
+
+Menu()
+
