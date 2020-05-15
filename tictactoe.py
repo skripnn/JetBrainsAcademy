@@ -2,7 +2,6 @@ import random
 
 
 class AI:
-
     wins = [[[0, 0], [0, 1], [0, 2]],
             [[1, 0], [1, 1], [1, 2]],
             [[2, 0], [2, 1], [2, 2]],
@@ -45,6 +44,34 @@ class AI:
             x, y = self.make_xy_from_step(step)
         return step
 
+    def find_side(self, field):
+        all_cells = [m for n in field for m in n]
+        all_x = [x for x in all_cells if x == 'X']
+        all_o = [o for o in all_cells if o == 'O']
+        if len(all_x) > len(all_o):
+            return 'O'
+        elif len(all_x) == len(all_o):
+            return 'X'
+
+
+class Easy(AI):
+
+    def step(self, field):
+        print('Making move level "easy"')
+        step = self.easy_step(field)
+        return step
+
+
+class Medium(AI):
+
+    def step(self, field):
+        print('Making move level "medium"')
+        side = self.find_side(field)
+        step = self.medium_step(field, side)
+        if step is None:
+            step = self.easy_step(field)
+        return step
+
     def medium_step(self, field, side):
         step = ''
         for win in self.wins:
@@ -66,32 +93,54 @@ class AI:
         return None
 
 
-class Easy(AI):
+class Hard(AI):
 
     def step(self, field):
-        print('Making move level "easy"')
-        step = self.easy_step(field)
-        return step
-
-
-class Medium(AI):
-
-    def step(self, field):
-        print('Making move level "medium"')
+        print('Making move level "hard"')
         side = self.find_side(field)
-        step = self.medium_step(field, side)
-        if step is None:
-            step = self.easy_step(field)
+        steps = self.find_steps(field)
+        for xy, score in steps.items():
+            steps[xy] += self.minimax(field, int(xy[0]), int(xy[1]), side, score)
+        result = None
+        for xy, score in steps.items():
+            if result is None or score >= result:
+                x, y = int(xy[0]), int(xy[1])
+                result = score
+        step = self.make_step_from_xy(x, y)
         return step
 
-    def find_side(self, field):
-        all_cells = [m for n in field for m in n]
-        all_x = [x for x in all_cells if x == 'X']
-        all_o = [o for o in all_cells if o == 'O']
-        if len(all_x) > len(all_o):
-            return 'O'
-        elif len(all_x) == len(all_o):
-            return 'X'
+    def find_steps(self, field):
+        steps = {}
+        for x in range(3):
+            for y in range(3):
+                if field[x][y] == ' ':
+                    steps[str(x)+str(y)] = 0
+        return steps
+
+    def minimax(self, field, x, y, side, score):
+        result = self.check_wins(field, x, y, side)
+        if result == 10:
+            return 10
+        side = 'X' if side == 'O' else 'O'
+        steps = self.find_steps(field)
+        for xy, score in steps.items():
+            steps[xy] += self.minimax(field, int(xy[0]), int(xy[1]), side, score + result) * -1
+        field[x][y] = ' '
+        return sum(steps.values()) - 10
+
+    def check_wins(self, field, x, y, side):
+        field[x][y] = side
+        for win in self.wins:
+            _ = ''
+            for coordinate in win:
+                _x = coordinate[0]
+                _y = coordinate[1]
+                _ += field[_x][_y]
+            if _[0] == _[1] == _[2] == side:
+                field[x][y] = ' '
+                return 10
+        return -10
+
 
 class Human:
 
@@ -111,21 +160,7 @@ class TicTacToe:
             [[2, 0], [1, 1], [0, 2]],
             ]
 
-    '''field = [[' ', ' ', ' '],
-             [' ', ' ', ' '],
-             [' ', ' ', ' ']]
-
-    cells = None
-    winners = []
-    state = None
-    count_steps = None
-    player = None
-
-    player_x = None
-    player_o = None'''
-
     def __init__(self, player_x, player_o):
-        # print('Enter cells: ', end='')
         self.field = [[' ', ' ', ' '],
                       [' ', ' ', ' '],
                       [' ', ' ', ' ']]
@@ -140,7 +175,6 @@ class TicTacToe:
         self.player_o = player_o
 
         self.algorithm()
-
 
     def first_step(self, steps):
         for x in range(3):
@@ -165,8 +199,6 @@ class TicTacToe:
     def step(self):
         step = None
         if self.player == 'X':
-            # if self.count_steps < 2:
-            # self.enter_the_coordinates()
             step = self.player_x.step(self.field)
         elif self.player == 'O':
             step = self.player_o.step(self.field)
@@ -246,8 +278,6 @@ class TicTacToe:
         all_cells = [m for n in self.field for m in n]
         all_x = [x for x in all_cells if x == 'X']
         all_o = [o for o in all_cells if o == 'O']
-        # if len(self.winners) > 1:
-        #     self.state = 'Impossible'
         if len(all_x) - len(all_o) > 1:
             self.state = 'Impossible'
         elif len(all_o) - len(all_x) > 1:
@@ -291,6 +321,8 @@ class Menu:
             return Easy()
         if player == 'medium':
             return Medium()
+        if player == 'hard':
+            return Hard()
         return None
 
     def bad_parameters(self):
@@ -299,4 +331,3 @@ class Menu:
 
 
 Menu()
-
