@@ -2,32 +2,96 @@ import random
 
 
 class AI:
-    class Easy:
 
-        def step(self, field):
-            print('Making move level "easy"')
+    wins = [[[0, 0], [0, 1], [0, 2]],
+            [[1, 0], [1, 1], [1, 2]],
+            [[2, 0], [2, 1], [2, 2]],
+            [[0, 0], [1, 0], [2, 0]],
+            [[0, 1], [1, 1], [2, 1]],
+            [[0, 2], [1, 2], [2, 2]],
+            [[0, 0], [1, 1], [2, 2]],
+            [[2, 0], [1, 1], [0, 2]],
+            ]
+
+    def random_coordinates(self):
+        x = random.randint(1, 3)
+        y = random.randint(1, 3)
+        return str(x) + ' ' + str(y)
+
+    def make_xy_from_step(self, step):
+        step = step.replace(' ', '')
+        x = int(step[1]) - 1
+        y = int(step[0]) - 1
+        if x == 2:
+            x = 0
+        elif x == 0:
+            x = 2
+        return x, y
+
+    def make_step_from_xy(self, x, y):
+        if x == 2:
+            x = 0
+        elif x == 0:
+            x = 2
+        _y = x + 1
+        _x = y + 1
+        return str(y + 1) + ' ' + str(x + 1)
+
+    def easy_step(self, field):
+        step = self.random_coordinates()
+        x, y = self.make_xy_from_step(step)
+        while field[x][y] != ' ':
             step = self.random_coordinates()
-            x, y = self.make_coordinates(step)
-            while field[x][y] != ' ':
-                step = self.random_coordinates()
-                x, y = self.make_coordinates(step)
+            x, y = self.make_xy_from_step(step)
+        return step
+
+    def medium_step(self, field, side):
+        step = ''
+        for win in self.wins:
+            _ = ''
+            for coordinate in win:
+                x = coordinate[0]
+                y = coordinate[1]
+                _ += field[x][y]
+            __ = _.replace(' ', '')
+            if len(__) == 2 and __[0] == __[1]:
+                option = _.index(' ')
+                x = win[option][0]
+                y = win[option][1]
+                step = self.make_step_from_xy(x, y)
+                if __[0] == side:
+                    return step
+        if step != '':
             return step
+        return None
 
-        def random_coordinates(self):
-            x = random.randint(1, 3)
-            y = random.randint(1, 3)
-            return str(x) + ' ' + str(y)
 
-        def make_coordinates(self, step):
-            step = step.replace(' ', '')
-            x = int(step[1]) - 1
-            y = int(step[0]) - 1
-            if x == 2:
-                x = 0
-            elif x == 0:
-                x = 2
-            return x, y
+class Easy(AI):
 
+    def step(self, field):
+        print('Making move level "easy"')
+        step = self.easy_step(field)
+        return step
+
+
+class Medium(AI):
+
+    def step(self, field):
+        print('Making move level "medium"')
+        side = self.find_side(field)
+        step = self.medium_step(field, side)
+        if step is None:
+            step = self.easy_step(field)
+        return step
+
+    def find_side(self, field):
+        all_cells = [m for n in field for m in n]
+        all_x = [x for x in all_cells if x == 'X']
+        all_o = [o for o in all_cells if o == 'O']
+        if len(all_x) > len(all_o):
+            return 'O'
+        elif len(all_x) == len(all_o):
+            return 'X'
 
 class Human:
 
@@ -49,15 +113,15 @@ class TicTacToe:
 
     '''field = [[' ', ' ', ' '],
              [' ', ' ', ' '],
-             [' ', ' ', ' ']]'''
+             [' ', ' ', ' ']]
 
-    '''cells = None
+    cells = None
     winners = []
     state = None
     count_steps = None
-    player = None'''
+    player = None
 
-    '''player_x = None
+    player_x = None
     player_o = None'''
 
     def __init__(self, player_x, player_o):
@@ -214,7 +278,6 @@ class Menu:
             players = []
             for arg in args:
                 players.append(self.player_choose(arg))
-                print(players)
                 if players[-1] is None:
                     return self.bad_parameters()
             return TicTacToe(*players)
@@ -225,7 +288,9 @@ class Menu:
         if player == 'user':
             return Human()
         if player == 'easy':
-            return AI.Easy()
+            return Easy()
+        if player == 'medium':
+            return Medium()
         return None
 
     def bad_parameters(self):
