@@ -53,25 +53,6 @@ class AI:
         elif len(all_x) == len(all_o):
             return 'X'
 
-
-class Easy(AI):
-
-    def step(self, field):
-        print('Making move level "easy"')
-        step = self.easy_step(field)
-        return step
-
-
-class Medium(AI):
-
-    def step(self, field):
-        print('Making move level "medium"')
-        side = self.find_side(field)
-        step = self.medium_step(field, side)
-        if step is None:
-            step = self.easy_step(field)
-        return step
-
     def medium_step(self, field, side):
         step = ''
         for win in self.wins:
@@ -93,12 +74,59 @@ class Medium(AI):
         return None
 
 
-class Hard(AI):
+class Easy(AI):
 
     def step(self, field):
+        print('Making move level "easy"')
+        step = self.easy_step(field)
+        return step
+
+
+class Medium(AI):
+
+    def step(self, field):
+        print('Making move level "medium"')
+        side = self.find_side(field)
+        step = self.medium_step(field, side)
+        if step is None:
+            step = self.easy_step(field)
+        return step
+
+
+class Hard(AI):
+
+    count = 0
+    counts = 0
+
+    def step(self, field):
+        self.count = 0
         print('Making move level "hard"')
         side = self.find_side(field)
         steps = self.find_steps(field)
+
+        if len(steps) == 9:
+            step = self.make_step_from_xy(1, 1)
+            self.count += 1
+            self.counts += 1
+            # print(f'side = {side}\ncount = {self.count}\ncounts = {self.counts}')
+            return step
+
+        if len(steps) == 8 and field[1][1] != ' ':
+            x = random.choice([0, 2])
+            y = random.choice([0, 2])
+            step = self.make_step_from_xy(x, y)
+            self.count += 1
+            self.counts += 1
+            # print(f'side = {side}\ncount = {self.count}\ncounts = {self.counts}')
+            return step
+
+        step = self.medium_step(field, side)
+        self.count += 1
+        self.counts += 1
+        if step is not None:
+            # print(f'side = {side}\ncount = {self.count}\ncounts = {self.counts}')
+            return step
+
         for xy, score in steps.items():
             steps[xy] += self.minimax(field, int(xy[0]), int(xy[1]), side, score)
         result = None
@@ -107,6 +135,7 @@ class Hard(AI):
                 x, y = int(xy[0]), int(xy[1])
                 result = score
         step = self.make_step_from_xy(x, y)
+        # print(f'side = {side}\ncount = {self.count}\ncounts = {self.counts}')
         return step
 
     def find_steps(self, field):
@@ -118,6 +147,8 @@ class Hard(AI):
         return steps
 
     def minimax(self, field, x, y, side, score):
+        self.count += 1
+        self.counts += 1
         result = self.check_wins(field, x, y, side)
         if result == 10:
             return 10
@@ -185,6 +216,8 @@ class TicTacToe:
         self.algorithm()
 
     def algorithm(self):
+        # all_counts = self.player_x.counts + self.player_o.counts
+        # print(f'all counts = {all_counts}')
         self.add_to_cells()
         self.print_cells()
         self.check_state()
@@ -313,6 +346,8 @@ class Menu:
             return TicTacToe(*players)
         if command == 'exit':
             exit()
+        else:
+            print('Wrong command!')
 
     def player_choose(self, player):
         if player == 'user':
