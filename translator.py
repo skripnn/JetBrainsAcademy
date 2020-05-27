@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from sys import argv
+import os
 
 languages = ['Arabic',
              'German',
@@ -17,20 +18,30 @@ languages = ['Arabic',
              'Turkish'
              ]
 
+lang_from = ''
+lang_to = ''
+word = ''
+
 
 def start():
-    lang_from = argv[1]
+    global lang_from, lang_to, word
+    if len(argv) != 4:
+        print('Please try again with arguments')
+        exit()
+    lang_from = try_language(argv[1])
     lang_to = argv[2]
     if lang_to == 'all':
         lang_to = languages
         lang_to.remove(lang_from.capitalize())
+    else:
+        try_language(lang_to)
     word = argv[3]
-    # lang_from, lang_to, word = choose_languages()
+
     if type(lang_to) is list:
         file = f'{word}.txt'
         with open(file, 'w') as file:
             for language in lang_to:
-                url = get_url(lang_from, language, word)
+                url = get_url(language)
                 html = get_response(url)
                 words, phrases = parser(html)
                 examples = make_examples(words, phrases, language, 1)
@@ -38,26 +49,17 @@ def start():
                 file.write(examples + '\n')
 
     else:
-        url = get_url(lang_from, lang_to, word)
+        url = get_url(lang_to)
         html = get_response(url)
         words, phrases = parser(html)
         print_examples(words, phrases, lang_to, 5)
 
 
-def choose_languages():
-    print("Hello, you're welcome to the translator. Translator supports:")
-    for n, language in enumerate(languages):
-        print(f'{n + 1}. {language}')
-    lang_from = input('Type the number of your language:\n')
-    lang_from = languages[int(lang_from) - 1]
-    lang_to = input("Type the number of language you want to translate to or '0' to translate to all languages:\n")
-    if lang_to != '0':
-        lang_to = languages[int(lang_to) - 1]
-    else:
-        lang_to = languages
-        lang_to.remove(lang_from)
-    word = input('Type the word you want to translate:\n').lower()
-    return lang_from, lang_to, word
+def try_language(language):
+    if language.capitalize() not in languages:
+        print(f"Sorry, the program doesn't support {language}")
+        exit()
+    return language.capitalize()
 
 
 def make_examples(words, phrases, language, examples_number):
@@ -84,15 +86,25 @@ def print_examples(words, phrases, language, examples_number):
 
 
 def get_response(url):
+    global word
     user_agent = 'Mozilla/5.0'
     response = requests.get(url, headers={'User-Agent': user_agent})
     if response.status_code == 200:
         return response.text
+    elif response.status_code == 404:
+        print(f'Sorry, unable to find {word}')
+
     else:
-        return None
+        print('Something wrong with your internet connection')
+    try:
+        os.remove(f'{word}.txt')
+    except FileNotFoundError:
+        pass
+    exit()
 
 
-def get_url(lang_from, lang_to, word):
+def get_url(lang_to):
+    global lang_from, word
     url = f'https://context.reverso.net/translation/{lang_from.lower()}-{lang_to.lower()}/{word}'
     return url
 
