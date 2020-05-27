@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from sys import argv
 
 languages = ['Arabic',
              'German',
@@ -18,7 +19,13 @@ languages = ['Arabic',
 
 
 def start():
-    lang_from, lang_to, word = choose_languages()
+    lang_from = argv[1]
+    lang_to = argv[2]
+    if lang_to == 'all':
+        lang_to = languages
+        lang_to.remove(lang_from.capitalize())
+    word = argv[3]
+    # lang_from, lang_to, word = choose_languages()
     if type(lang_to) is list:
         file = f'{word}.txt'
         with open(file, 'w') as file:
