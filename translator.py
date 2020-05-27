@@ -7,7 +7,31 @@ def start():
     language, word = input_params()
     url = get_url(language, word)
     html = get_response(url)
-    parser(html)
+    words, phrases = parser(html)
+    print_examples(words, phrases, language)
+
+
+def print_examples(words, phrases, language):
+    if language == 'fr':
+        lang = 'French'
+    elif language == 'en':
+        lang = 'English'
+    print('\nContext examples:')
+    print(f'\n{lang} Translations:')
+    for n, i in enumerate(words):
+        print(i)
+        if n == 4:
+            break
+    print(f'\n{lang} Examples:')
+    for n, i in enumerate(phrases):
+        if n % 2 == 0:
+            print(f'{i}:')
+        else:
+            print(f'{i}')
+            if n // 2 == 4:
+                break
+            print('')
+
 
 
 def input_params():
@@ -46,10 +70,11 @@ def parser(html):
     words_list = get_list_from_soup(soup, words_tags)
     phrases_tags = ['div.src.ltr', 'div.trg.ltr']
     phrases_list = get_list_from_soup(soup, phrases_tags)
-    words = ', '.join(words_list)
-    phrases = ', '.join(phrases_list)
-    print('Translation, ' + words)
-    print('Translation, ' + phrases)
+    # words = ', '.join(words_list)
+    # phrases = ', '.join(phrases_list)
+    # print('Translation, ' + words)
+    # print('Translation, ' + phrases)
+    return words_list, phrases_list
 
 
 def get_list_from_soup(soup, tags):
