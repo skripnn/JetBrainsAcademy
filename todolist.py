@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Date
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import sessionmaker
 
 
@@ -13,7 +13,7 @@ Base = declarative_base()
 class Task(Base):
     __tablename__ = 'task'
     id = Column(Integer, primary_key=True)
-    task = Column(String, default='default_value')
+    task = Column(String, default='unnamed task')
     deadline = Column(Date, default=datetime.today())
 
     def __repr__(self):
@@ -21,13 +21,14 @@ class Task(Base):
 
 
 Base.metadata.create_all(engine)
-
+Session = sessionmaker(bind=engine)
 
 class Menu:
-    state = None
 
     menu = ['Exit',
             "Today's tasks",
+            "Week's tasks",
+            'All tasks',
             'Add task']
 
     def __init__(self):
@@ -42,41 +43,64 @@ class Menu:
         print(last_item)
 
     def input(self, n):
-        if self.state is None:
-            print('')
-            n = int(n)
-            if n == 0:
-                print('Bye!')
-                exit()
-            elif n == 1:
-                self.todays_task()
-            elif n == 2:
-                print('Enter task')
-                self.state = self.menu[n]
+        print('')
+        n = self.menu[int(n)]
+        if n == 'Exit':
+            print('Bye!')
+            exit()
+        elif n == "Today's tasks":
+            self.todays_task()
+        elif n == "Week's tasks":
+            self.weeks_tasks()
+        elif n == 'All tasks':
+            self.all_tasks()
+        elif n == 'Add task':
+            self.add_task()
 
-        elif self.state == self.menu[2]:
-            self.add_task(n)
-            self.state = None
+        print('')
+        self.print_menu()
 
-        if self.state is None:
-            print('')
-            self.print_menu()
-
-    def todays_task(self):
-        Session = sessionmaker(bind=engine)
+    def all_tasks(self):
         session = Session()
         rows = session.query(Task).all()
         if len(rows) == 0:
             print('Nothing to do!')
         else:
-            print('Today:')
-            for row in rows:
-                print(f'{row.id}. {row}')
+            print('All tasks:')
+            for n, row in enumerate(rows, 1):
+                deadline = row.deadline.day + row.deadline.strftime("%b")
+                print(f'{n}. {row}. {deadline}')
+        print('')
 
-    def add_task(self, task):
-        Session = sessionmaker(bind=engine)
+    def weeks_tasks(self):
+        day = datetime.today().date()
+        for _ in range(7):
+            print(f'{day.strftime("%A")} {day.day} {day.strftime("%b")}:')
+            self.print_tasks(day)
+            day += timedelta(days=1)
+
+    def print_tasks(self, day):
         session = Session()
-        new_row = Task(task=task)
+        rows = session.query(Task).filter(Task.deadline == day).all()
+        if len(rows) == 0:
+            print('Nothing to do!')
+        else:
+            for n, row in enumerate(rows, 1):
+                print(f'{n}. {row}')
+        print('')
+
+    def todays_task(self):
+        day = datetime.today().date()
+        print(f'Today {day.day} {day.strftime("%b")}:')
+        self.print_tasks(day)
+
+    def add_task(self):
+        task = input('Enter activity\n')
+        date = input('Enter deadline\n')
+        deadline = datetime.strptime(date, '%Y-%m-%d').date()
+        session = Session()
+        new_row = Task(task=task,
+                       deadline=deadline)
         session.add(new_row)
         session.commit()
         print('The task has been added!')
