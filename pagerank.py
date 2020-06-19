@@ -1,3 +1,5 @@
+from operator import itemgetter
+
 import numpy as np
 import numpy.linalg as la
 from io import StringIO
@@ -68,7 +70,7 @@ def page_rank_vector_precision(matrix, r=None, precision=0.01):
 
 def pagerank(matrix, d=None):
     if d is None:
-        page_rank_vector_precision(matrix)
+        return page_rank_vector_precision(matrix)
     x = matrix.shape[0]
     j = np.ones((x, x))
     m = d * matrix + ((1 - d) / x) * j
@@ -114,4 +116,32 @@ def stage_4():
     print_value(pagerank(array, d))
 
 
-stage_4()
+def stage_5():
+    size = int(input())
+    names = [n for n in input().split()]
+    matrix = []
+    for i in range(size):
+        matrix.append([float(n) for n in input().split()])
+    search = input()
+    array = np.array(matrix)
+    rank = pagerank(array, d=0.5)
+    s = StringIO()
+    np.savetxt(s, rank, fmt="%.3f")
+    ranks = s.getvalue().split('\n')
+
+    result_list = []
+    for i in range(size):
+        result_list.append([names[i], ranks[i]])
+    sorted_list = sorted(result_list, key=itemgetter(1), reverse=True)
+
+    result_list = []
+    for n, i in enumerate(sorted_list):
+        if i[0] == search:
+            result_list.append(sorted_list.pop(n))
+    while len(result_list) < 5 and len(sorted_list) > 0:
+        result_list.append(sorted_list.pop(0))
+    for i in result_list:
+        print(i[0])
+
+
+stage_5()
