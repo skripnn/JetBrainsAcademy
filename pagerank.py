@@ -66,6 +66,15 @@ def page_rank_vector_precision(matrix, r=None, precision=0.01):
     return r_next
 
 
+def pagerank(matrix, d=None):
+    if d is None:
+        page_rank_vector_precision(matrix)
+    x = matrix.shape[0]
+    j = np.ones((x, x))
+    m = d * matrix + ((1 - d) / x) * j
+    return page_rank_vector_precision(m)
+
+
 def stage_1(matrix):
     print_value(matrix)
     e_vals, e_vecs = la.eig(matrix)
@@ -85,23 +94,24 @@ def stage_2(matrix):
         r = page_rank_vector(matrix, r)
     print_value(r)
 
-    r = page_rank_vector_precision(matrix, r, 0.001)
-    print_value(r)
+    print_value(page_rank_vector_precision(matrix, r))
 
 
 def stage_3(matrix):
-    x = len(matrix)
     print_value(matrix)
-
-    d = 0.5
-    j = np.ones((x, x))
-    m = d * matrix + ((1 - d) / x) * j
-
-    r = page_rank_vector_precision(matrix)
-    print_value(r)
-
-    r = page_rank_vector_precision(m)
-    print_value(r)
+    print_value(pagerank(matrix))
+    print_value(pagerank(matrix, d=0.5))
 
 
-stage_3(L2)
+def stage_4():
+    args = input().split()
+    size = int(args[0])
+    d = float(args[1])
+    matrix = []
+    for i in range(size):
+        matrix.append([float(n) for n in input().split()])
+    array = np.array(matrix)
+    print_value(pagerank(array, d))
+
+
+stage_4()
