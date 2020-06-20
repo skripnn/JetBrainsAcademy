@@ -1,4 +1,5 @@
 import random
+import sqlite3
 
 
 class Menu:
@@ -13,7 +14,21 @@ class Menu:
     def __init__(self):
         self.card = None
         self.state = [0]
+        self.database()
         self.algorithm()
+
+    def database(self):
+        conn = sqlite3.connect("card.s3db")
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""CREATE TABLE card
+                              (id INTEGER PRIMARY KEY NOT NULL,
+                               number text,
+                               pin text,
+                               balance INTEGER DEFAULT 0)
+                           """)
+        except sqlite3.OperationalError:
+            return None
 
     def algorithm(self):
         while True:
@@ -66,19 +81,22 @@ class Menu:
 
         print('Your card has been created')
         print('Your card number:')
-        print(card.card_number)
+        print(card.number)
         print('Your card PIN:')
         print(card.pin)
 
     def _2(self):
-        card_number = input('Enter your card number:\n')
+        number = input('Enter your card number:\n')
         pin = input('Enter your PIN:\n')
-        for card in Cards.cards:
-            if card.card_number == card_number:
-                if pin == card.pin:
-                    print('\nYou have successfully logged in!')
-                    return card
-                break
+
+        conn = sqlite3.connect("card.s3db")
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT * FROM card WHERE number={number}")
+        card = cursor.fetchone()
+        if card is not None:
+            if pin == card[2]:
+                print('\nYou have successfully logged in!')
+                return Cards(card)
         print('\nWrong card number or PIN!')
         return None
 
@@ -97,23 +115,37 @@ class Menu:
 
 class Cards:
     mii = 400000
-    cards = []
 
-    def __init__(self):
-        if len(Cards.cards) == 0:
-            iin = 1
+    def __init__(self, card=None):
+        if card is None:
+            conn = sqlite3.connect("card.s3db")
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM card")
+            ids = cursor.fetchall()
+            if len(ids) == 0:
+                iin = 1
+            else:
+                ids = [n[0] for n in ids]
+                max_id = max(ids)
+                iin = max_id + 1
+            pin = ''
+            for _ in range(4):
+                pin += str(random.randrange(0, 9))
+
+            self.checksum = self.luhn(iin)
+            self.number = str(self.mii * 10 ** 10 + iin * 10 + self.checksum)
+            self.pin = pin
+            self.balance = 0
+
+            conn = sqlite3.connect("card.s3db")
+            cursor = conn.cursor()
+            sql = f"INSERT INTO card (number, pin) VALUES ('{self.number}', '{self.pin}')"
+            cursor.execute(sql)
+            conn.commit()
         else:
-            iin = Cards.cards[-1].iin + 1
-        pin = ''
-        for _ in range(4):
-            pin += str(random.randrange(0, 9))
-
-        self.iin = iin
-        self.checksum = self.luhn(iin)
-        self.card_number = str(self.mii * 10 ** 10 + self.iin * 10 + self.checksum)
-        self.pin = pin
-        self.balance = 0
-        Cards.cards.append(self)
+            self.number = card[1]
+            self.pin = card[2]
+            self.balance = card[3]
 
     def luhn(self, iin):
         numbers = [int(n) for n in str(self.mii * 10 ** 10 + iin * 10)]
