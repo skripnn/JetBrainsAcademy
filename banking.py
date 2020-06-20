@@ -109,11 +109,24 @@ class Cards:
             pin += str(random.randrange(0, 9))
 
         self.iin = iin
-        self.checksum = 1
+        self.checksum = self.luhn(iin)
         self.card_number = str(self.mii * 10 ** 10 + self.iin * 10 + self.checksum)
         self.pin = pin
         self.balance = 0
         Cards.cards.append(self)
+
+    def luhn(self, iin):
+        numbers = [int(n) for n in str(self.mii * 10 ** 10 + iin * 10)]
+        for i, n in enumerate(numbers):
+            if i % 2 == 0:
+                numbers[i] = n * 2
+        for i, n in enumerate(numbers):
+            if n > 9:
+                numbers[i] = n - 9
+        checksum = 10 - sum(numbers) % 10
+        if checksum == 10:
+            checksum = 0
+        return checksum
 
 
 if __name__ == '__main__':
