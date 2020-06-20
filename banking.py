@@ -9,6 +9,9 @@ class Menu:
 
     menu_2 = ['Exit',
               'Balance',
+              'Add income',
+              'Do transfer',
+              'Close account',
               'Log out']
 
     def __init__(self):
@@ -38,27 +41,28 @@ class Menu:
             except ValueError:
                 print('Only numbers please')
                 continue
-
-            if len(self.state) == 1:
-                print('')
+            print('')
+            if n == 0:
+                self._0()
+            elif len(self.state) == 1:
                 if n == 1:
                     self._1()
                 elif n == 2:
                     self.card = self._2()
                     if self.card is not None:
                         self.state.append(2)
-                elif n == 0:
-                    self._0()
             elif len(self.state) == 2:
                 if self.state[1] == 2:
                     if n == 1:
-                        print('')
                         self._21()
                     elif n == 2:
-                        print('')
                         self._22()
-                    elif n == 0:
-                        self._0()
+                    elif n == 3:
+                        self._23()
+                    elif n == 4:
+                        self._24()
+                    elif n == 5:
+                        self._25()
 
     def print_menu(self):
         if len(self.state) == 1:
@@ -101,17 +105,67 @@ class Menu:
         return None
 
     def _0(self):
-        print('Bye!')
+        print('\nBye!')
         exit()
 
     def _21(self):
         print(f'Balance: {self.card.balance}')
 
     def _22(self):
+        income = int(input('Enter income:\n'))
+        self.card.update_balance(income)
+        print('Income was added!')
+
+    def _23(self):
+        print('Transfer')
+        number = input('Enter card number:\n')
+        if not self.luhn(number):
+            print('Probably you made mistake in the card number. Please try again!')
+            return None
+
+        conn = sqlite3.connect("card.s3db")
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT * FROM card WHERE number={number}")
+        card = cursor.fetchone()
+        if card is None:
+            print('Such a card does not exist.')
+        else:
+            money = int(input('Enter how much money you want to transfer:\n'))
+            if money > self.card.balance:
+                print('Not enough money!')
+            else:
+                self.card.transfer(money, Cards(card))
+                print('Success!')
+
+    def _24(self):
+        conn = sqlite3.connect("card.s3db")
+        cursor = conn.cursor()
+        cursor.execute(f"DELETE FROM card WHERE number={self.card.number}")
+        conn.commit()
+        self.card = None
+        self.state.pop(-1)
+        print('The account has been closed!')
+
+    def _25(self):
         self.card = None
         self.state.pop(-1)
         print('You have successfully logged out!')
 
+    def luhn(self, number):
+        numbers = [int(n) for n in number]
+        last_symbol = numbers.pop(-1)
+        for i, n in enumerate(numbers):
+            if i % 2 == 0:
+                numbers[i] = n * 2
+        for i, n in enumerate(numbers):
+            if n > 9:
+                numbers[i] = n - 9
+        checksum = 10 - sum(numbers) % 10
+        if checksum == 10:
+            checksum = 0
+        if last_symbol != checksum:
+            return False
+        return True
 
 class Cards:
     mii = 400000
@@ -160,6 +214,17 @@ class Cards:
             checksum = 0
         return checksum
 
+    def update_balance(self, money):
+        self.balance += money
+
+        conn = sqlite3.connect("card.s3db")
+        cursor = conn.cursor()
+        cursor.execute(f"UPDATE card SET balance='{self.balance}' WHERE number={self.number}")
+        conn.commit()
+
+    def transfer(self, money, card):
+        self.update_balance(-money)
+        card.update_balance(money)
 
 if __name__ == '__main__':
     Menu()
